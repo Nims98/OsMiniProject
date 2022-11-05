@@ -30,11 +30,11 @@ int main()
     for (int i = 0; i < 100; i++)
     {
         sprintf(marks.student_index, "EG/%04d/%04d", i, i);
-        marks.assgnmt01_marks = (float)(rand() % 100);
-        marks.assgnmt02_marks = (float)(rand() % 100);
-        marks.project_marks = (float)(rand() % 100);
-        marks.finalExam_marks = (float)(rand() % 100);
-
+        marks.assgnmt01_marks = (float)(rand() % 16);
+        marks.assgnmt02_marks = (float)(rand() % 16);
+        marks.project_marks = (float)(rand() % 21);
+        marks.finalExam_marks = (float)(rand() % 51);
+        printf("%d\n", (rand() % 16));
         fwrite(&marks, sizeof(struct student_marks), 1, fp);
     }
 }
