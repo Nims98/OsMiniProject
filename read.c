@@ -26,4 +26,6 @@ int main()
     {
         printf("%s\t%.2f\t\t%.2f\t\t%.2f\t\t%.2f\n", marks.student_index, marks.assgnmt01_marks, marks.assgnmt02_marks, marks.project_marks, marks.finalExam_marks);
     }
+    fclose(fp);
+    return 0;
 }
