@@ -6,10 +6,14 @@
 ![LINUX](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 </div>
 
-### This is an C Program developed to perform Insert, Update and Delete operations on file.
+### This is an C Program developed to perform Insert, Read, Update and Delete operations on file.
 ## Insert
 ```
  $ ./Part_A -i <INDEX> <ASSIGNMENT 1 MARKS> <ASSIGNMENT 2 MARKS> <PROJECT> <FINAL EXAM>
+ ```
+## Read
+```
+ $ ./Part_A -r
  ```
 ## Update
 ```

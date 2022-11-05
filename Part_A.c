@@ -17,17 +17,17 @@ struct student_marks
 
 int main(int argc, char *argv[])
 {
-    FILE *fp;
-    fp = fopen("marks.txt", "r+");
-    if (fp == NULL)
-    {
-        fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
-        exit(1);
-    }
 
     // genrate the marks randomly
     if (argc == 1)
     {
+        FILE *fp;
+        fp = fopen("marks.txt", "w");
+        if (fp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
         struct student_marks marks;
         for (int i = 0; i < 100; i++)
         {
@@ -37,12 +37,25 @@ int main(int argc, char *argv[])
             marks.project_marks = (float)(rand() % 21);
             marks.finalExam_marks = (float)(rand() % 51);
             printf("%d\n", (rand() % 16));
-            fwrite(&marks, sizeof(struct student_marks), 1, fp);
+
+            if (fwrite(&marks, sizeof(struct student_marks), 1, fp) != 1)
+            {
+                fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                exit(1);
+            }
         }
+        fclose(fp);
     }
     // read recorded marks
     else if (argc == 2 && strcmp(argv[1], "-r") == 0)
     {
+        FILE *fp;
+        fp = fopen("marks.txt", "r");
+        if (fp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
 
         struct student_marks marks;
         printf("Student Index\tAssignment 01\tAssignment 02\tProject\t\tFinal Exam\n");
@@ -50,10 +63,18 @@ int main(int argc, char *argv[])
         {
             printf("%s\t%.2f\t\t%.2f\t\t%.2f\t\t%.2f\n", marks.student_index, marks.assgnmt01_marks, marks.assgnmt02_marks, marks.project_marks, marks.finalExam_marks);
         }
+        fclose(fp);
     }
     // insert marks
     else if (argc == 7 && strcmp(argv[1], "-i") == 0)
     {
+        FILE *fp;
+        fp = fopen("marks.txt", "a");
+        if (fp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
         struct student_marks marks;
         strcpy(marks.student_index, argv[2]);
         marks.assgnmt01_marks = atof(argv[3]);
@@ -61,12 +82,24 @@ int main(int argc, char *argv[])
         marks.project_marks = atof(argv[5]);
         marks.finalExam_marks = atof(argv[6]);
         fseek(fp, 0, SEEK_END);
-        fwrite(&marks, sizeof(struct student_marks), 1, fp);
+        if (fwrite(&marks, sizeof(struct student_marks), 1, fp) != 1)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
         printf("Marks for %s inserted successfully\n", marks.student_index);
+        fclose(fp);
     }
     // update marks
     else if (argc == 7 && strcmp(argv[1], "-u") == 0)
     {
+        FILE *fp;
+        fp = fopen("marks.txt", "w");
+        if (fp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
         struct student_marks marks;
         while (fread(&marks, sizeof(struct student_marks), 1, fp) == 1)
         {
@@ -81,35 +114,51 @@ int main(int argc, char *argv[])
                 if (strcmp(argv[6], "-") != 0)
                     marks.finalExam_marks = atof(argv[6]);
                 fseek(fp, -sizeof(struct student_marks), SEEK_CUR);
-                fwrite(&marks, sizeof(struct student_marks), 1, fp);
+                if (fwrite(&marks, sizeof(struct student_marks), 1, fp) != 1)
+                {
+                    fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                    exit(1);
+                }
                 printf("Marks for %s updated successfully\n", marks.student_index);
                 break;
             }
         }
+        fclose(fp);
     }
     else if (argc == 3 && strcmp(argv[1], "-d") == 0)
     {
         // delete marks
         struct student_marks marks;
+        FILE *fp, *temp;
+        fp = fopen("marks.txt", "r");
+        temp = fopen("temp.txt", "w");
+        if (fp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
+        if (temp == NULL)
+        {
+            fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+            exit(1);
+        }
         while (fread(&marks, sizeof(struct student_marks), 1, fp) == 1)
         {
-            if (strcmp(marks.student_index, argv[2]) == 0)
+            if (strcmp(marks.student_index, argv[2]) != 0)
             {
-                while (!feof(fp))
+                if (fwrite(&marks, sizeof(struct student_marks), 1, temp) != 1)
                 {
-                    fread(&marks, sizeof(struct student_marks), 1, fp);
-                    fseek(fp, -2 * sizeof(struct student_marks), SEEK_CUR);
-                    fwrite(&marks, sizeof(struct student_marks), 1, fp);
-                    fseek(fp, sizeof(struct student_marks), SEEK_CUR);
-                    break;
-                    // printf(marks.student_index);
+                    fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                    exit(1);
                 }
-                printf("Marks for %s deleted successfully\n", marks.student_index);
-                break;
             }
         }
+        fclose(temp);
+        remove("marks.txt");
+        rename("temp.txt", "marks.txt");
+        printf("Marks for %s deleted successfully\n", argv[2]);
+        fclose(fp);
     }
 
-    fclose(fp);
     return 0;
 }
