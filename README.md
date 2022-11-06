@@ -22,6 +22,5 @@
 If you do not wish to update an certain mark keep the relevant argument as "-".
 ## Delete
 ```
- $ ./Part_A -i <INDEX>
+ $ ./Part_A -d <INDEX>
  ```
-
