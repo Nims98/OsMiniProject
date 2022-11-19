@@ -2,8 +2,8 @@
 
 # Os Programming Project
 
-![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
-![LINUX](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![C](https://img.icons8.com/color/48/null/c-programming.png)
+![LINUX](https://img.icons8.com/color/48/null/linux--v1.png)
 </div>
 
 ### This is an C Program developed to perform Insert, Read, Update and Delete operations on file.
