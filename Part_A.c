@@ -18,8 +18,8 @@ typedef struct
 
 /**
  * int main
- * @param[in] argc
- * @param[in] argv
+ * @param[in] argc  : number of arguments
+ * @param[in] argv  : array of arguments
  * @return 0 on success
  */
 int main(int argc, char *argv[])
@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
 
         student_marks marks;
         for (int i = 0; i < 100; i++)
-        {
-            sprintf(marks.student_index, "EG/%04d/%04d", i, i);
+        { // * Generate the marks randomly and store them in a file
+            sprintf(marks.student_index, "EG/%04d/%04d", (int)(rand() % 2020), (int)(rand() % 4000));
             marks.assgnmt01_marks = (float)(rand() % 16);
             marks.assgnmt02_marks = (float)(rand() % 16);
             marks.project_marks = (float)(rand() % 21);
@@ -55,6 +55,16 @@ int main(int argc, char *argv[])
             }
         }
         fclose(fp);
+
+        printf("Successfully generated marks and stored in the file.\n\n"); // * Print the success message
+
+        // * ------------------------ Instructions for usage{ ---------------------
+        printf("To Insert new records \n\t\t  $ ./Part_A -i <INDEX> <ASSIGNMENT 1 MARKS> <ASSIGNMENT 2 MARKS> <PROJECT> <FINAL EXAM>\n");
+        printf("To Read all records \n\t\t  $ ./Part_A -r\n");
+        printf("To Update a particular record \n\t\t  $ ./Part_A -u <INDEX> <ASSIGNMENT 1 MARKS> <ASSIGNMENT 2 MARKS> <PROJECT> <FINAL EXAM> ");
+        printf("(If you do not wish to update an certain mark keep the relevant argument as \"-\".)\n");
+        printf("To Delete a particular record \n\t\t  $ ./Part_A -d <INDEX>\n");
+        // * --------------------------------------------------------------------- }
     }
     // * ------------------------------------------------------------------------------------------------------- }
     // * ----------------------------------- Read the recorded marks from the file { ---------------------------
@@ -129,7 +139,7 @@ int main(int argc, char *argv[])
         int found = 0;
         student_marks marks;
         while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
-        {
+        { // * Search for the student index
             if (strcmp(marks.student_index, argv[2]) == 0)
             {
                 found = 1;
@@ -182,7 +192,7 @@ int main(int argc, char *argv[])
         // * ---------------------------------------------- }
 
         while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
-        {
+        { // * Search for the student index and skip the record
             if (strcmp(marks.student_index, argv[2]) != 0)
             {
                 found = 1;
@@ -198,8 +208,8 @@ int main(int argc, char *argv[])
             printf("Student index %s not found\n", argv[2]);
         }
         fclose(temp);
-        remove("marks.txt");
-        rename("temp.txt", "marks.txt");
+        remove("marks.txt");             // * Delete the original file
+        rename("temp.txt", "marks.txt"); // * Rename the temporary file
         printf("Marks for %s deleted successfully\n", argv[2]);
         fclose(fp);
     }
