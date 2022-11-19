@@ -7,6 +7,9 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <string.h>
+
+// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
+
 /*
  * A structure to hold the student marks
  */

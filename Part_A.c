@@ -3,6 +3,8 @@
 #include <string.h>
 #include <errno.h>
 
+// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
+
 /*
  * A structure to hold the student marks
  */
@@ -42,7 +44,7 @@ int main(int argc, char *argv[])
         student_marks marks;
         for (int i = 0; i < 100; i++)
         { // * Generate the marks randomly and store them in a file
-            sprintf(marks.student_index, "EG/%04d/%04d", (int)(rand() % 2020), (int)(rand() % 4000));
+            sprintf(marks.student_index, "EG/%04d/%04d", (int)(rand() % 2018), (int)(rand() % 3600));
             marks.assgnmt01_marks = (float)(rand() % 16);
             marks.assgnmt02_marks = (float)(rand() % 16);
             marks.project_marks = (float)(rand() % 21);
