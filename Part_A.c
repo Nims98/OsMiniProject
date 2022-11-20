@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <regex.h>
 
+// Sabaragamuwa S.B.N.M. - EG/2018/3443
 // * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
 
 /*
@@ -67,8 +69,10 @@ int main(int argc, char *argv[])
         printf("(If you do not wish to update an certain mark keep the relevant argument as \"-\".)\n");
         printf("To Delete a particular record \n\t\t  $ ./Part_A -d <INDEX>\n");
         // * --------------------------------------------------------------------- }
+        exit(0);
     }
     // * ------------------------------------------------------------------------------------------------------- }
+
     // * ----------------------------------- Read the recorded marks from the file { ---------------------------
     else if (argc == 2 && strcmp(argv[1], "-r") == 0)
     {
@@ -91,13 +95,34 @@ int main(int argc, char *argv[])
                    marks.assgnmt02_marks, marks.project_marks, marks.finalExam_marks);
         }
         fclose(fp);
+        exit(0);
     }
     // * ---------------------------------------------------------------------------------------------------------}
+
     // * ----------------------------------- Insert new records to the file { ------------------------------------
     else if (argc == 7 && strcmp(argv[1], "-i") == 0)
     {
+        // * Check the validity of the index number {----------------
+        regex_t regex;
+        int reti;
+        reti = regcomp(&regex, "EG/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]", 0);
+        if (reti)
+        {
+            fprintf(stderr, "Could not compile regex\n");
+            exit(1);
+        }
+        reti = regexec(&regex, argv[2], 0, NULL, 0);
+        if (reti == REG_NOMATCH)
+        {
+            fprintf(stderr, "Invalid Index Number\n");
+            printf("Index number should be in the format EG/XXXX/XXXX\n");
+            exit(1);
+        }
+        regfree(&regex);
+        // * ------------------------------------------------------- }
+
         FILE *fp;
-        fp = fopen("marks.txt", "a");
+        fp = fopen("marks.txt", "a+");
 
         // * Error handling for file opening {--------------
         if (fp == NULL)
@@ -106,13 +131,26 @@ int main(int argc, char *argv[])
             exit(1);
         }
         // * ---------------------------------------------- }
-
         student_marks marks;
+
+        // * Check whether the index number is already in the file {----------------
+        while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
+        {
+            if (strcmp(marks.student_index, argv[2]) == 0)
+            {
+                printf("Student Index already exists\n");
+                printf("%s\t%.2f\t\t%.2f\t\t%.2f\t\t%.2f\n", marks.student_index, marks.assgnmt01_marks,
+                       marks.assgnmt02_marks, marks.project_marks, marks.finalExam_marks);
+                exit(0);
+            }
+        }
+        // * ---------------------------------------------------------------------- }
+
         strcpy(marks.student_index, argv[2]);
-        marks.assgnmt01_marks = atof(argv[3]);
-        marks.assgnmt02_marks = atof(argv[4]);
-        marks.project_marks = atof(argv[5]);
-        marks.finalExam_marks = atof(argv[6]);
+        (atoi(argv[3]) > 15) ? (printf("Assignment 01 marks should be less than 15\n"), exit(0)) : (marks.assgnmt01_marks = atof(argv[3]));
+        (atoi(argv[4]) > 15) ? (printf("Assignment 02 marks should be less than 15\n"), exit(0)) : (marks.assgnmt02_marks = atof(argv[4]));
+        (atoi(argv[5]) > 20) ? (printf("Project marks should be less than 20\n"), exit(0)) : (marks.project_marks = atof(argv[5]));
+        (atoi(argv[6]) > 50) ? (printf("Final exam marks should be less than 50\n"), exit(0)) : (marks.finalExam_marks = atof(argv[6]));
         fseek(fp, 0, SEEK_END);
         if (fwrite(&marks, sizeof(student_marks), 1, fp) != 1) // fwrite with error handling
         {
@@ -121,6 +159,7 @@ int main(int argc, char *argv[])
         }
         printf("Marks for %s inserted successfully\n", marks.student_index);
         fclose(fp);
+        exit(0);
     }
     // * ------------------------------------------------------------------------------------------------------------ }
 
@@ -146,13 +185,13 @@ int main(int argc, char *argv[])
             {
                 found = 1;
                 if (strcmp(argv[3], "-") != 0)
-                    marks.assgnmt01_marks = atof(argv[3]);
+                    (atoi(argv[3]) > 15) ? (printf("Assignment 01 marks should be less than 15\n"), exit(0)) : (marks.assgnmt01_marks = atof(argv[3]));
                 if (strcmp(argv[4], "-") != 0)
-                    marks.assgnmt02_marks = atof(argv[4]);
+                    (atoi(argv[4]) > 15) ? (printf("Assignment 02 marks should be less than 15\n"), exit(0)) : (marks.assgnmt02_marks = atof(argv[4]));
                 if (strcmp(argv[5], "-") != 0)
-                    marks.project_marks = atof(argv[5]);
+                    (atoi(argv[5]) > 20) ? (printf("Project marks should be less than 20\n"), exit(0)) : (marks.project_marks = atof(argv[5]));
                 if (strcmp(argv[6], "-") != 0)
-                    marks.finalExam_marks = atof(argv[6]);
+                    (atoi(argv[6]) > 50) ? (printf("Final exam marks should be less than 50\n"), exit(0)) : (marks.finalExam_marks = atof(argv[6]));
                 fseek(fp, -sizeof(student_marks), SEEK_CUR);
                 if (fwrite(&marks, sizeof(student_marks), 1, fp) != 1) // fwrite with error handling
                 {
@@ -168,6 +207,7 @@ int main(int argc, char *argv[])
             printf("Student index %s not found\n", argv[2]);
         }
         fclose(fp);
+        exit(0);
     }
     // * -------------------------------------------------------------------------------------------------------------}
 
@@ -214,12 +254,12 @@ int main(int argc, char *argv[])
         rename("temp.txt", "marks.txt"); // * Rename the temporary file
         printf("Marks for %s deleted successfully\n", argv[2]);
         fclose(fp);
+        exit(0);
     }
     // * -------------------------------------------------------------------------------------------------------------}
     else
     {
         printf("Invalid arguments\n");
     }
-
     return 0;
 }
