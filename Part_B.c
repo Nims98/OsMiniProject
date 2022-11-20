@@ -1,3 +1,6 @@
+// * Sabaragamuwa S.B.N.M. - EG/2018/3443
+// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -7,9 +10,6 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <string.h>
-
-// Sabaragamuwa S.B.N.M. - EG/2018/3443
-// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
 
 /*
  * A structure to hold the student marks

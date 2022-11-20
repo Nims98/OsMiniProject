@@ -1,11 +1,11 @@
+// * Sabaragamuwa S.B.N.M. - EG/2018/3443
+// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <regex.h>
-
-// Sabaragamuwa S.B.N.M. - EG/2018/3443
-// * Link to GitHub   :   https://github.com/Nims98/OsMiniProject
 
 /*
  * A structure to hold the student marks
@@ -19,6 +19,12 @@ typedef struct
     float finalExam_marks;  /** 50% for Final Exam  */
 
 } student_marks;
+
+/**
+ * Index Validation
+ * @param index
+ */
+void validateIndex(char *index);
 
 /**
  * int main
@@ -103,22 +109,7 @@ int main(int argc, char *argv[])
     else if (argc == 7 && strcmp(argv[1], "-i") == 0)
     {
         // * Check the validity of the index number {----------------
-        regex_t regex;
-        int reti;
-        reti = regcomp(&regex, "EG/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]", 0);
-        if (reti)
-        {
-            fprintf(stderr, "Could not compile regex\n");
-            exit(1);
-        }
-        reti = regexec(&regex, argv[2], 0, NULL, 0);
-        if (reti == REG_NOMATCH)
-        {
-            fprintf(stderr, "Invalid Index Number\n");
-            printf("Index number should be in the format EG/XXXX/XXXX\n");
-            exit(1);
-        }
-        regfree(&regex);
+        validateIndex(argv[2]);
         // * ------------------------------------------------------- }
 
         FILE *fp;
@@ -166,6 +157,9 @@ int main(int argc, char *argv[])
     // * ------------------------------------------------ Update marks { --------------------------------------------
     else if (argc == 7 && strcmp(argv[1], "-u") == 0)
     {
+        // * Check the validity of the index number {----------------
+        validateIndex(argv[2]);
+        // * ------------------------------------------------------- }
         FILE *fp;
         fp = fopen("marks.txt", "r+");
 
@@ -214,6 +208,9 @@ int main(int argc, char *argv[])
     // * ----------------------------------------------- Delete records { --------------------------------------------
     else if (argc == 3 && strcmp(argv[1], "-d") == 0)
     {
+        // * Check the validity of the index number {
+        validateIndex(argv[2]);
+        // * -------------------------------------- }
         student_marks marks;
         FILE *fp, *temp;
         fp = fopen("marks.txt", "r");
@@ -232,22 +229,30 @@ int main(int argc, char *argv[])
             exit(1);
         }
         // * ---------------------------------------------- }
-
         while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
-        { // * Search for the student index and skip the record
-            if (strcmp(marks.student_index, argv[2]) != 0)
+        { // * Search for the student index
+            if (strcmp(marks.student_index, argv[2]) == 0)
             {
                 found = 1;
+                fseek(fp, 0, SEEK_SET);
+                break;
+            }
+        }
+        if (found == 0)
+        {
+            printf("Student index %s not found\n", argv[2]);
+            exit(0);
+        }
+        while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
+        { // * Write the remaining records to the temp file
+            if (strcmp(marks.student_index, argv[2]) != 0)
+            {
                 if (fwrite(&marks, sizeof(student_marks), 1, temp) != 1) // fwrite with error handling
                 {
                     fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
                     exit(1);
                 }
             }
-        }
-        if (found == 0)
-        {
-            printf("Student index %s not found\n", argv[2]);
         }
         fclose(temp);
         remove("marks.txt");             // * Delete the original file
@@ -262,4 +267,24 @@ int main(int argc, char *argv[])
         printf("Invalid arguments\n");
     }
     return 0;
+}
+
+void validateIndex(char *index)
+{
+    regex_t regex;
+    int reti;
+    reti = regcomp(&regex, "EG/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]", 0);
+    if (reti)
+    {
+        fprintf(stderr, "Could not compile regex\n");
+        exit(1);
+    }
+    reti = regexec(&regex, index, 0, NULL, 0);
+    if (reti == REG_NOMATCH)
+    {
+        fprintf(stderr, "Invalid Index Number\n");
+        printf("Index number should be in the format EG/XXXX/XXXX\n");
+        exit(1);
+    }
+    regfree(&regex);
 }
