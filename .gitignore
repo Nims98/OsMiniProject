@@ -1,0 +1,6 @@
+.vscode
+# ignore all .txt files
+marks.txt
+# igonre c object files
+Part_A
+Part_B
