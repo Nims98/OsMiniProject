@@ -38,7 +38,6 @@ int main()
     // * ---------------------------------------------- }
 
     student_marks marks;
-    int i = 0;
 
     key_t key = ftok("marks.txt", 65); // ftok to generate unique key
 
@@ -71,12 +70,15 @@ int main()
     }
     // * ---------------------------------------------- }
 
+    int noOfRecords = 0;
     while (fread(&marks, sizeof(student_marks), 1, fp) == 1)
     {
-        fmarks[i] = marks.finalExam_marks;
-        i++;
+        fmarks[noOfRecords] = marks.finalExam_marks;
+        noOfRecords++;
     }
+
     fclose(fp);
+
     pid_t pid = fork();
 
     // * Error handling for fork {--------------
@@ -88,7 +90,9 @@ int main()
     // * ---------------------------------------------- }
 
     else if (pid == 0)
-    { //  Child Procees 1
+    {
+        //  Child Procees C1 -------------------------------------------------------------------{
+
         float *c1marks;
         c1marks = (float *)shmat(SMID, NULL, SHM_R | SHM_W);
 
@@ -102,15 +106,24 @@ int main()
 
         // Calculate the minimum
         float min = c1marks[0];
-        for (int i = 0; i < 100; i++)
+
+        for (int j = 0; j < noOfRecords; j++)
         {
-            if (c1marks[i] < min)
+            if (c1marks[j] < min)
             {
-                min = c1marks[i];
+                min = c1marks[j];
             }
         }
-        // printf("The minimum mark is %.2f\n", min);
-        printf("Child Process 1 --- %d --- %d : fmarks = %.2f\n", getpid(), getppid(), c1marks[0]);
+        printf("The minimum mark is %.2f\n", min);
+        // printf("Child Process 1 --- %d --- %d : marks = %.2f\n", getpid(), getppid(), c1marks[1]);
+
+        if (shmdt((void *)c1marks) == -1)
+        {
+            perror("shmdt parent error");
+            printf("errno: %d\n", errno);
+            exit(1);
+        }
+        // --------------------------------------------------------------------------------------}
     }
     else
     {
@@ -124,7 +137,7 @@ int main()
         // * ---------------------------------------------- }
         else if (pid == 0)
         {
-            // Child Procees 2
+            // Child Procees C2 ------------------------------------------------------------------------------{
 
             float *c2marks;
             c2marks = (float *)shmat(SMID, NULL, SHM_R | SHM_W);
@@ -135,17 +148,79 @@ int main()
                 exit(1);
             }
             // * ---------------------------------------------- }
+
             // Calculate the maximum
             float max = c2marks[0];
-            for (int i = 0; i < 100; i++)
+
+            for (int j = 0; j < noOfRecords; j++)
             {
-                if (c2marks[i] > max)
+                if (c2marks[j] > max)
                 {
-                    max = c2marks[i];
+                    max = c2marks[j];
                 }
             }
-            // printf("The maximum mark is %.2f\n", max);
-            printf("Child Process 2 --- %d --- %d : fmarks = %.2f\n", getpid(), getppid(), c2marks[0]);
+            printf("The maximum mark is %.2f\n", max);
+            // printf("Child Process 2 --- %d --- %d : marks = %.2f\n", getpid(), getppid(), c2marks[0]);
+
+            if (shmdt((void *)c2marks) == -1)
+            {
+                perror("shmdt parent error");
+                printf("errno: %d\n", errno);
+                exit(1);
+            }
+
+            pid_t cpid = fork();
+            // * Error handling for fork {--------------
+            if (pid == -1)
+            {
+                fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                exit(1);
+            }
+            // * ---------------------------------------------- }
+            else if (cpid == 0)
+            {
+                // Child Procees CC1    (Grand Child of P1) -----------------------------------{
+
+                float *c21marks;
+                c21marks = (float *)shmat(SMID, NULL, SHM_R | SHM_W);
+
+                // * Error handling for shared memory attach {--------------
+                if (c21marks == (float *)-1)
+                {
+                    fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                    exit(1);
+                }
+                // * ---------------------------------------------- }
+
+                // Calculate the number below 17.5
+                int count = 0;
+                for (int j = 0; j < noOfRecords; j++)
+                {
+                    if (c21marks[j] < 17.5)
+                    {
+                        count++;
+                    }
+                }
+                printf("The number of students who got below 17.5 is %d\n", count);
+                // printf("Child Process 2.1 --- %d --- %d : marks = %.2f\n", getpid(), getppid(), c21marks[0]);
+
+                if (shmdt((void *)c21marks) == -1)
+                {
+                    perror("shmdt parent error");
+                    printf("errno: %d\n", errno);
+                    exit(1);
+                }
+                // ------------------------------------------------------------------------}
+            }
+            else
+            { // Wait for child process CC1 to finish
+                if (waitpid(cpid, NULL, 0) == -1)
+                {
+                    fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                }
+            }
+
+            // --------------------------------------------------------------------------------------}
         }
         else
         {
@@ -156,11 +231,11 @@ int main()
                 fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
                 exit(1);
             }
-            // * ---------------------------------------------- }
+            // * -------------------------------------- }
 
             else if (pid == 0)
             {
-                // Child Procees 3
+                // Child Procees 3 -------------------------------------------------------------------{
 
                 float *c3marks;
                 c3marks = (float *)shmat(SMID, NULL, SHM_R | SHM_W);
@@ -175,64 +250,46 @@ int main()
 
                 // Calculate the average
                 float sum = 0;
-                for (int i = 0; i < 100; i++)
+                for (int j = 0; j < noOfRecords; j++)
                 {
-                    sum += c3marks[i];
+                    sum += c3marks[j];
                 }
-                float avg = sum / 100;
-                // printf("The average mark is %.2f\n", avg);
-                printf("Child Process 3 --- %d --- %d : fmarks = %.2f\n", getpid(), getppid(), c3marks[0]);
 
-                pid_t cpid = fork();
-                // * Error handling for fork {--------------
-                if (pid == -1)
+                float avg = sum / noOfRecords;
+                printf("The average mark is %.2f\n", avg);
+                // printf("Child Process 3 --- %d --- %d : marks = %.2f\n", getpid(), getppid(), c3marks[0]);
+
+                if (shmdt((void *)c3marks) == -1)
                 {
-                    fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
+                    perror("shmdt parent error");
+                    printf("errno: %d\n", errno);
                     exit(1);
                 }
-                // * ---------------------------------------------- }
-                else if (cpid == 0)
-                {
-                    // Child Procees 3.1
-                    float *c31marks;
-                    c31marks = (float *)shmat(SMID, NULL, SHM_R | SHM_W);
 
-                    // * Error handling for shared memory attach {--------------
-                    if (c31marks == (float *)-1)
-                    {
-                        fprintf(stderr, "ERROR (%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
-                        exit(1);
-                    }
-                    // * ---------------------------------------------- }
-
-                    // Calculate the number below 17.5
-                    int count = 0;
-                    for (int i = 0; i < 100; i++)
-                    {
-                        if (c31marks[i] < 17.5)
-                        {
-                            count++;
-                        }
-                    }
-                    // printf("The number of students who got below 17.5 is %d\n", count);
-                    printf("Child Process 3.1 --- %d --- %d : fmarks = %.2f\n", getpid(), getppid(), c31marks[0]);
-                }
-                else
-                {
-                    if (waitpid(cpid, NULL, 0) == -1)
-                    {
-                        fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
-                    }
-                }
+                // --------------------------------------------------------------------------------------}
             }
 
             else
-            {
+            { // Wait for child process to finish
                 if (waitpid(pid, NULL, 0) == -1)
                 {
                     fprintf(stderr, "Error(%s:%d)\n -- %s", __FILE__, __LINE__, strerror(errno));
                 }
-                printf("Parent Process --- %d\n", getpid());
+                // printf("Parent Process --- %d\n", getpid());
+                // Detach the shared memory
+                if (shmdt((void *)fmarks) == -1)
+                {
+                    perror("shmdt parent error");
+                    printf("errno: %d\n", errno);
+                    exit(1);
+                }
+                // Remove the shared memory
+                if (shmctl(SMID, IPC_RMID, NULL) == -1)
+                {
+                    perror("shmctl parent error");
+                    printf("errno: %d\n", errno);
+                    exit(1);
+                }
             }
         }
     }
